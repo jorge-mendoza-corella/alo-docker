@@ -1,0 +1,39 @@
+# Secretos y credenciales
+.env
+.env.local
+.env.*.local
+ssh-key
+*.pem
+*.key
+*.pub
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Node
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Directorio de workspace (clonado en runtime)
+workspace/
+
+# Sistema
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+
+# Logs
+logs/
+*.log
+
+# Temporal
+tmp/
+temp/
+*.tmp

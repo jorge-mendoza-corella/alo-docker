@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  alo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alo-container
+    environment:
+      # Inyectar contraseña maestra de Bitwarden
+      BW_MASTER_PASSWORD: ${BW_MASTER_PASSWORD}
+      BW_CLIENTID: ${BW_CLIENTID}
+      BW_CLIENTSECRET: ${BW_CLIENTSECRET}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"      # Dashboard (Next.js)
+      - "8000:8000"      # Agentes API
+      - "8001:8001"      # Agentes API alternativo
+      - "18789:18789"    # OpenClaw Gateway
+      - "5432:5432"      # PostgreSQL
+    volumes:
+      - ./workspace:/home/alo
+      - alo-secrets:/home/alo/.openclaw/secrets
+      - alo-state:/home/alo/state
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - alo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: alo-postgres
+    environment:
+      POSTGRES_DB: agentes
+      POSTGRES_USER: alo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - alo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  alo-secrets:
+  alo-state:
+  postgres-data:
+
+networks:
+  alo-network:
+    driver: bridge
