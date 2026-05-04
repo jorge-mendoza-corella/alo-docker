@@ -9,18 +9,12 @@ services:
         GITHUB_USER: ${GITHUB_USER}
     container_name: alo-agentes
     environment:
-      # Bitwarden
+      # Bitwarden - para desbloquear y obtener credenciales automáticamente
       BW_MASTER_PASSWORD: ${BW_MASTER_PASSWORD}
       BW_CLIENTID: ${BW_CLIENTID}
       BW_CLIENTSECRET: ${BW_CLIENTSECRET}
-      # Supabase
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_KEY: ${SUPABASE_KEY}
       # Entorno
       NODE_ENV: production
-      # OpenClaw server base (para conectar con Alo)
-      OPENCLAW_HOST: ${OPENCLAW_HOST:-localhost}
-      OPENCLAW_PORT: ${OPENCLAW_PORT:-18789}
     ports:
       - "3000:3000"      # Dashboard (Next.js)
       - "8000:8000"      # Agentes API principal

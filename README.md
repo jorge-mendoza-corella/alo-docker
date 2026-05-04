@@ -66,18 +66,20 @@ docker-compose up -d
 
 ## ⚙️ Configurar .env
 
-Edita `.env` antes de ejecutar:
+Solo necesitas 4 variables:
 
 ```bash
 GITHUB_USER=tu-usuario-github
-BW_MASTER_PASSWORD=tu_contraseña_maestra
-BW_CLIENTID=tu_client_id
-BW_CLIENTSECRET=tu_client_secret
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_KEY=tu_api_key
-OPENCLAW_HOST=localhost
-OPENCLAW_PORT=18789
+BW_MASTER_PASSWORD=tu_contraseña_maestra_aqui
+BW_CLIENTID=user.dea03998-31c9-4808-97b2-b42d00ff601c
+BW_CLIENTSECRET=BP4FhiPSrCrLAQwH7RrDqgGk0sxaup
+NODE_ENV=production
 ```
+
+**Credenciales se extraen automáticamente de Bitwarden:**
+- `SUPABASE_URL` y `SUPABASE_KEY` → Se obtienen en tiempo de ejecución
+- El Docker desbloquea Bitwarden y extrae las credenciales automáticamente
+- **Ventaja:** Credenciales sensibles NO están en `.env` (más seguro)
 
 ## 📁 Estructura
 

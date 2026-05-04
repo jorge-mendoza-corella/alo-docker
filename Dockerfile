@@ -54,6 +54,14 @@ WORKDIR /home/alo
 RUN mkdir -p /home/alo/.openclaw/secrets \
     && mkdir -p /home/alo/state
 
+# Instalar Bitwarden CLI para extraer credenciales
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -L https://github.com/bitwarden/clients/releases/download/cli-v2024.12.0/bw-linux-x64.zip \
+    -o /tmp/bw.zip && unzip /tmp/bw.zip -d /usr/local/bin && chmod +x /usr/local/bin/bw && rm /tmp/bw.zip
+
 # Crear script de inicialización para agentes
 RUN cat > /entrypoint.sh << 'EOF'
 #!/bin/bash
@@ -64,12 +72,24 @@ echo "================================"
 echo "Iniciando servicios..."
 echo ""
 
-# Descargar credenciales de Bitwarden si es necesario
+# Desbloquear Bitwarden y extraer credenciales
 if [ ! -z "$BW_MASTER_PASSWORD" ]; then
     echo "🔑 Desbloqueando Bitwarden..."
     export BW_PASSWORD="$BW_MASTER_PASSWORD"
     BW_SESSION=$(bw unlock "$BW_PASSWORD" --raw)
     export BW_SESSION
+
+    echo "📥 Obteniendo credenciales de Supabase desde Bitwarden..."
+    SUPABASE_ITEM=$(bw get item "supabase" --session=$BW_SESSION 2>/dev/null)
+
+    export SUPABASE_URL=$(echo $SUPABASE_ITEM | jq -r '.login.uri // empty')
+    export SUPABASE_KEY=$(echo $SUPABASE_ITEM | jq -r '.login.password // empty')
+
+    if [ ! -z "$SUPABASE_URL" ] && [ ! -z "$SUPABASE_KEY" ]; then
+        echo "✓ Credenciales de Supabase obtenidas desde Bitwarden"
+    else
+        echo "⚠ Advertencia: No se encontraron credenciales de Supabase en Bitwarden"
+    fi
 fi
 
 # Esperar a que esté listo
