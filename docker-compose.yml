@@ -1,30 +1,34 @@
 version: '3.9'
 
 services:
-  alo:
+  alo-agentes:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: alo-container
+      args:
+        GITHUB_USER: ${GITHUB_USER}
+    container_name: alo-agentes
     environment:
-      # Inyectar contraseña maestra de Bitwarden
+      # Bitwarden
       BW_MASTER_PASSWORD: ${BW_MASTER_PASSWORD}
       BW_CLIENTID: ${BW_CLIENTID}
       BW_CLIENTSECRET: ${BW_CLIENTSECRET}
       # Supabase
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
+      # Entorno
       NODE_ENV: production
+      # OpenClaw server base (para conectar con Alo)
+      OPENCLAW_HOST: ${OPENCLAW_HOST:-localhost}
+      OPENCLAW_PORT: ${OPENCLAW_PORT:-18789}
     ports:
       - "3000:3000"      # Dashboard (Next.js)
-      - "8000:8000"      # Agentes API
-      - "8001:8001"      # Agentes API alternativo
-      - "18789:18789"    # OpenClaw Gateway
+      - "8000:8000"      # Agentes API principal
+      - "8001:8001"      # Agentes API secundario
     volumes:
-      - ./workspace:/home/alo
+      - alo-workspace:/home/alo/workspace
       - alo-secrets:/home/alo/.openclaw/secrets
       - alo-state:/home/alo/state
-      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     networks:
       - alo-network
@@ -33,11 +37,15 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
 
 volumes:
+  alo-workspace:
+    driver: local
   alo-secrets:
+    driver: local
   alo-state:
+    driver: local
 
 networks:
   alo-network:

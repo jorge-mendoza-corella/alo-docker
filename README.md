@@ -1,116 +1,161 @@
-# 🦜 Alo Docker - Infraestructura Portable
+# 🦜 Alo Docker - Sistema Multi-Agente Portable
 
-Este repositorio contiene la configuración de Docker para desplegar **Alo** (agente de IA multi-agente) de manera portable en cualquier servidor Ubuntu.
+Clona **TODO** (código + infraestructura) y ejecuta en cualquier VPS Ubuntu virgen.
+
+```bash
+git clone git@github.com:tu-usuario/alo-docker.git
+cd alo-docker
+chmod +x deploy.sh
+./deploy.sh
+```
+
+**Eso es todo.** En 10 minutos tienes:
+- Dashboard (Next.js) en puerto 3000
+- 9 Agentes IA ejecutándose
+- Conectados a Supabase
+- Alo sigue aquí en Telegram via OpenClaw (servidor base)
 
 ## 📋 Requisitos
 
 - Docker 20.10+
 - Docker Compose 2.0+
-- SSH key configurada para acceso a GitHub
-- Credenciales de Bitwarden (contraseña maestra)
+- SSH key de GitHub en `ssh-key`
+- Credenciales de Bitwarden
 
-## 🚀 Quick Start
+## 🏗️ Arquitectura
 
-### 1. Clonar el repositorio
+```
+VPS Ubuntu
+├── OpenClaw (servidor base)
+│   ├── Alo (yo, Claude API + Telegram)
+│   └── Conecta a Docker
+│
+└── Docker (alo-docker)
+    ├── agentes-dashboard (puerto 3000)
+    ├── agentes-infra (puertos 8000-8001)
+    ├── agentes_lineas_de_negocio
+    └── Clona workspace completo automáticamente
+```
+
+## 🚀 Deploy Rápido
+
+### Opción 1: Script automático (recomendado)
 ```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+Configura todo: descarga SSH key, clona workspace, instala dependencias, inicia servicios.
+
+### Opción 2: Manual
+```bash
+# Clonar
 git clone git@github.com:tu-usuario/alo-docker.git
 cd alo-docker
-```
 
-### 2. Configurar variables de entorno
-```bash
+# Configurar
 cp .env.example .env
+# Edita .env con tus valores
+
+# Construir
+docker-compose build --build-arg GITHUB_USER=tu-usuario
+
+# Iniciar
+docker-compose up -d
 ```
 
-Edita `.env` con:
-- `BW_MASTER_PASSWORD`: Contraseña maestra de Bitwarden
-- `BW_CLIENTID` y `BW_CLIENTSECRET`: Credenciales de Bitwarden
-- `SUPABASE_URL`: URL de tu proyecto Supabase
-- `SUPABASE_KEY`: API key de Supabase
+## ⚙️ Configurar .env
 
-### 3. Copiar SSH key de GitHub (si no está en el sistema)
-```bash
-mkdir -p ~/.ssh
-cp ssh-key ~/.ssh/id_ed25519
-chmod 600 ~/.ssh/id_ed25519
-ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-```
+Edita `.env` antes de ejecutar:
 
-### 4. Construir e iniciar
 ```bash
-docker-compose up -d --build
-```
-
-### 5. Verificar estado
-```bash
-docker-compose ps
-docker-compose logs alo
+GITHUB_USER=tu-usuario-github
+BW_MASTER_PASSWORD=tu_contraseña_maestra
+BW_CLIENTID=tu_client_id
+BW_CLIENTSECRET=tu_client_secret
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_KEY=tu_api_key
+OPENCLAW_HOST=localhost
+OPENCLAW_PORT=18789
 ```
 
 ## 📁 Estructura
 
 ```
 alo-docker/
-├── Dockerfile                  # Imagen de Alo
-├── docker-compose.yml          # Orquestación de servicios
-├── .dockerignore              # Archivos a ignorar en build
+├── Dockerfile                  # Imagen con Node.js + agentes
+├── docker-compose.yml          # Orquestación
+├── deploy.sh                   # Script de deploy automático
+├── setup.sh                    # Comandos útiles (logs, shell, restart)
+├── .dockerignore              # Archivos a ignorar
 ├── .env.example               # Template de variables
-├── .gitignore                 # Git ignore
-├── ssh-key                    # SSH key privada para GitHub (NO commitear)
+├── .gitignore                 # Git ignore (protege secretos)
+├── ssh-key                    # SSH key de GitHub (NO commitear)
 └── README.md                  # Este archivo
 ```
+
+Cuando el Docker inicia:
+- Clona `openclaw-workspace` completo
+- Instala dependencias (npm install en cada sub-proyecto)
+- Dashboard listo en puerto 3000
+- Agentes listos en puertos 8000-8001
+
 
 ## 🔐 Seguridad
 
 ### SSH Key
-- La SSH key se usa **SOLO** durante el build para clonar el repositorio
-- **NO** debe commiterse a Git
-- Se ignora automáticamente vía `.gitignore`
+- Se usa solo para clonar el workspace en el build
+- **NO se commitea** a Git
+- Protegida en `.gitignore`
+- La obtienes de Bitwarden: `ssh-key-github-personal-vps-clone-2026`
 
 ### Secretos
-- Contraseña maestra de Bitwarden se inyecta via `.env`
-- Nunca comitear `.env` (solo `.env.example`)
-- Bitwarden CLI desbloquea credenciales dentro del contenedor
+- `.env` nunca se commitea (en `.gitignore`)
+- Solo `.env.example` es público
+- Bitwarden password maestra se inyecta en runtime
+- Workspace clonado y credenciales gestionadas dentro del Docker
 
 ## 📊 Puertos Expuestos
 
-- `3000`: Dashboard (Next.js)
-- `8000`: Agentes API
-- `8001`: Agentes API alternativo
-- `18789`: OpenClaw Gateway
+| Puerto | Servicio | Descripción |
+|--------|----------|-------------|
+| 3000 | Dashboard | Next.js UI para agentes |
+| 8000 | Agentes API | API principal |
+| 8001 | Agentes API alt | API secundaria |
 
-**Base de datos:** Conecta a Supabase via `SUPABASE_URL` y `SUPABASE_KEY`
+**OpenClaw + Alo:** Corriendo en servidor base (fuera del Docker)  
+**Base de datos:** Supabase (via `SUPABASE_URL` y `SUPABASE_KEY`)
 
 ## 🛠️ Comandos Útiles
 
-### Iniciar servicios
+### Con setup.sh (recomendado)
 ```bash
-docker-compose up -d
+./setup.sh start      # Iniciar
+./setup.sh stop       # Detener
+./setup.sh logs       # Ver logs
+./setup.sh shell      # Entrar al contenedor
+./setup.sh restart    # Reiniciar
+./setup.sh status     # Ver estado
 ```
 
-### Ver logs
+### Con docker-compose directo
 ```bash
-docker-compose logs -f alo
+docker-compose up -d              # Iniciar
+docker-compose down               # Detener
+docker-compose logs -f alo-agentes # Ver logs
+docker-compose exec alo-agentes bash # Shell
+docker-compose restart            # Reiniciar
 ```
 
-### Detener servicios
-```bash
-docker-compose down
-```
-
-### Reconstruir imagen
-```bash
-docker-compose up -d --build
-```
-
-### Ejecutar comando en el contenedor
-```bash
-docker-compose exec alo bash
-```
-
-## 🔄 Actualizar Alo
+## 🔄 Actualizar
 
 ```bash
+# Traer cambios del workspace
+docker-compose exec alo-agentes bash
+cd workspace
+git pull origin main
+
+# O reconstruir todo
 docker-compose down
 docker-compose up -d --build
 ```
