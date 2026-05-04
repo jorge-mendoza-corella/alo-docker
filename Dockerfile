@@ -59,8 +59,8 @@ WORKDIR /home/alo
 RUN mkdir -p /home/alo/.openclaw/secrets \
     && mkdir -p /home/alo/state
 
-# Exposer puertos
-EXPOSE 3000 8000 8001 18789 5432
+# Exponer puertos
+EXPOSE 3000 8000 8001 18789
 
 # Script de inicialización
 RUN echo '#!/bin/bash\n\

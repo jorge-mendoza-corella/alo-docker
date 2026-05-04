@@ -25,7 +25,8 @@ cp .env.example .env
 Edita `.env` con:
 - `BW_MASTER_PASSWORD`: Contraseña maestra de Bitwarden
 - `BW_CLIENTID` y `BW_CLIENTSECRET`: Credenciales de Bitwarden
-- `POSTGRES_PASSWORD`: Contraseña para PostgreSQL
+- `SUPABASE_URL`: URL de tu proyecto Supabase
+- `SUPABASE_KEY`: API key de Supabase
 
 ### 3. Copiar SSH key de GitHub (si no está en el sistema)
 ```bash
@@ -77,7 +78,8 @@ alo-docker/
 - `8000`: Agentes API
 - `8001`: Agentes API alternativo
 - `18789`: OpenClaw Gateway
-- `5432`: PostgreSQL
+
+**Base de datos:** Conecta a Supabase via `SUPABASE_URL` y `SUPABASE_KEY`
 
 ## 🛠️ Comandos Útiles
 
@@ -104,11 +106,6 @@ docker-compose up -d --build
 ### Ejecutar comando en el contenedor
 ```bash
 docker-compose exec alo bash
-```
-
-### Acceder a PostgreSQL
-```bash
-docker-compose exec postgres psql -U alo -d agentes
 ```
 
 ## 🔄 Actualizar Alo
